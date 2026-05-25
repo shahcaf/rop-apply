@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: discord-staff-app
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
+      - key: DISCORD_CHANNEL_ID
+        sync: false
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_STAFF_ROLE_ID
+        sync: false
+      - key: PORT
+        value: 3000
