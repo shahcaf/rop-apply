@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Submit your application to join the Discord server staff team. Clean, simple, and responsive dark-mode application form.">
+  <title>Discord Staff Application</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 127.14 96.36'%3E%3Cpath fill='%235865F2' d='M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.4-5c.89-.65,1.76-1.34,2.58-2.07a75.14,75.14,0,0,0,72.57,0c.82.73,1.69,1.42,2.58,2.07a68.43,68.43,0,0,1-10.4,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129,54.65,123.5,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z'/%3E%3C/svg%3E">
+</head>
+<body>
+
+  <!-- Background Decorative Orbs -->
+  <div class="decor-orb orb-1"></div>
+  <div class="decor-orb orb-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36" class="discord-logo">
+          <path fill="currentColor" d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.4-5c.89-.65,1.76-1.34,2.58-2.07a75.14,75.14,0,0,0,72.57,0c.82.73,1.69,1.42,2.58,2.07a68.43,68.43,0,0,1-10.4,5,77.7,77.7,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31-18.83C129,54.65,123.5,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z"/>
+        </svg>
+      </div>
+      <h1 id="app-title">Staff Application</h1>
+      <p id="app-subtitle">Join our moderation team and help keep our community safe and welcoming.</p>
+    </header>
+
+    <!-- Progress Tracker -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-indicator"></div>
+      <div class="step-nodes">
+        <div class="step-node active" data-step="1">1<span class="step-label">General</span></div>
+        <div class="step-node" data-step="2">2<span class="step-label">Experience</span></div>
+        <div class="step-node" data-step="3">3<span class="step-label">Scenarios I</span></div>
+        <div class="step-node" data-step="4">4<span class="step-label">Scenarios II</span></div>
+        <div class="step-node" data-step="5">5<span class="step-label">Finish</span></div>
+      </div>
+    </div>
+
+    <!-- Application Form Card -->
+    <main class="form-card">
+      <form id="staff-app-form" novalidate>
+        
+        <!-- SECTION 1: GENERAL INFO -->
+        <section class="form-section active" data-section="1">
+          <h2 class="section-title">Step 1: General Information</h2>
+          <p class="section-description">Let's start with basic info about you so we can identify you on Discord.</p>
+          
+          <div class="form-group">
+            <label for="discord_tag">1. What is your Discord Username? <span class="required">*</span></label>
+            <input type="text" id="discord_tag" name="discord_tag" placeholder="e.g. wumpus or username#1234" required>
+            <span class="error-msg" id="error-discord_tag">Please enter your Discord username.</span>
+            <small class="helper-text">Enter your full Discord username (including discriminator if you still have one).</small>
+          </div>
+
+          <div class="form-group">
+            <label for="discord_id">2. What is your Discord User ID? <span class="required">*</span></label>
+            <input type="text" id="discord_id" name="discord_id" placeholder="e.g. 187483928475928374" required>
+            <span class="error-msg" id="error-discord_id">Please enter a valid Discord User ID (numeric, 17-19 characters).</span>
+            <small class="helper-text">To get this, enable Discord Developer Mode, right click your profile, and select 'Copy User ID'. Required to receive DM notifications.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="age">3. How old are you? <span class="required">*</span></label>
+            <input type="number" id="age" name="age" min="13" max="100" placeholder="e.g. 18" required>
+            <span class="error-msg" id="error-age">Please enter a valid age (must be at least 13).</span>
+            <small class="helper-text">You must be at least 13 years old to use Discord.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="timezone">4. What is your timezone / country of residence? <span class="required">*</span></label>
+            <input type="text" id="timezone" name="timezone" placeholder="e.g. GMT+2 / Germany" required>
+            <span class="error-msg" id="error-timezone">Please enter your timezone/country.</span>
+            <small class="helper-text">This helps us coordinate staff coverage times.</small>
+          </div>
+        </section>
+
+        <!-- SECTION 2: COMMITMENT & EXPERIENCE -->
+        <section class="form-section" data-section="2">
+          <h2 class="section-title">Step 2: Experience & Commitment</h2>
+          <p class="section-description">Tell us about your history on Discord and your availability.</p>
+
+          <div class="form-group">
+            <label for="hours_active">5. How many hours per week can you dedicate to the server? <span class="required">*</span></label>
+            <input type="number" id="hours_active" name="hours_active" min="1" max="168" placeholder="e.g. 15" required>
+            <span class="error-msg" id="error-hours_active">Please enter a valid number of hours (1 to 168).</span>
+          </div>
+
+          <div class="form-group">
+            <label for="why_staff">6. Why do you want to join our staff team? <span class="required">*</span></label>
+            <textarea id="why_staff" name="why_staff" rows="3" placeholder="Tell us your motivation..." required></textarea>
+            <span class="error-msg" id="error-why_staff">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="experience">7. What prior moderation/staff experience do you have? <span class="required">*</span></label>
+            <textarea id="experience" name="experience" rows="3" placeholder="Mention server names, sizes, or responsibilities..." required></textarea>
+            <span class="error-msg" id="error-experience">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="strengths">8. What are your key strengths? <span class="required">*</span></label>
+            <textarea id="strengths" name="strengths" rows="3" placeholder="What makes you stand out?" required></textarea>
+            <span class="error-msg" id="error-strengths">Please answer this question.</span>
+          </div>
+        </section>
+
+        <!-- SECTION 3: SCENARIOS I -->
+        <section class="form-section" data-section="3">
+          <h2 class="section-title">Step 3: Self-Reflection & Basic Scenarios</h2>
+          <p class="section-description">How do you handle internal pressure and common moderation issues?</p>
+
+          <div class="form-group">
+            <label for="weaknesses">9. What are your weaknesses, and how do you manage them? <span class="required">*</span></label>
+            <textarea id="weaknesses" name="weaknesses" rows="3" placeholder="Be honest - we value self-awareness..." required></textarea>
+            <span class="error-msg" id="error-weaknesses">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="stress_handle">10. How do you handle stressful situations or conflict? <span class="required">*</span></label>
+            <textarea id="stress_handle" name="stress_handle" rows="3" placeholder="Explain your coping mechanisms..." required></textarea>
+            <span class="error-msg" id="error-stress_handle">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="handle_spam">11. Scenario: A user is spamming links in chat. What do you do? <span class="required">*</span></label>
+            <textarea id="handle_spam" name="handle_spam" rows="3" placeholder="Detail your step-by-step reaction..." required></textarea>
+            <span class="error-msg" id="error-handle_spam">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="handle_argument">12. Scenario: Two members are arguing in text/voice. How do you de-escalate? <span class="required">*</span></label>
+            <textarea id="handle_argument" name="handle_argument" rows="3" placeholder="How do you handle conflict between users?" required></textarea>
+            <span class="error-msg" id="error-handle_argument">Please answer this question.</span>
+          </div>
+        </section>
+
+        <!-- SECTION 4: SCENARIOS II -->
+        <section class="form-section" data-section="4">
+          <h2 class="section-title">Step 4: Advanced Scenarios</h2>
+          <p class="section-description">Dealing with rule violations and team dynamics.</p>
+
+          <div class="form-group">
+            <label for="handle_dm_adv">13. Scenario: A member is reported for advertising in DMs. What do you do? <span class="required">*</span></label>
+            <textarea id="handle_dm_adv" name="handle_dm_adv" rows="3" placeholder="What proof do you ask for, and what action is taken?" required></textarea>
+            <span class="error-msg" id="error-handle_dm_adv">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="handle_abuse">14. Scenario: You suspect another staff member is abusing power. What do you do? <span class="required">*</span></label>
+            <textarea id="handle_abuse" name="handle_abuse" rows="3" placeholder="How do you handle internal staff conflicts?" required></textarea>
+            <span class="error-msg" id="error-handle_abuse">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="handle_nsfw">15. Scenario: A user posts NSFW content in general chat. What is your response? <span class="required">*</span></label>
+            <textarea id="handle_nsfw" name="handle_nsfw" rows="3" placeholder="What actions do you take immediately?" required></textarea>
+            <span class="error-msg" id="error-handle_nsfw">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="handle_unsure">16. If you are unsure of a moderation decision, what do you do? <span class="required">*</span></label>
+            <textarea id="handle_unsure" name="handle_unsure" rows="3" placeholder="Who do you consult, or how do you decide?" required></textarea>
+            <span class="error-msg" id="error-handle_unsure">Please answer this question.</span>
+          </div>
+        </section>
+
+        <!-- SECTION 5: FINISH -->
+        <section class="form-section" data-section="5">
+          <h2 class="section-title">Step 5: Miscellaneous & Agreement</h2>
+          <p class="section-description">Almost done! Just a few final details and confirmation.</p>
+
+          <div class="form-group">
+            <label for="hobbies">17. What are your hobbies or interests outside of Discord? <span class="required">*</span></label>
+            <textarea id="hobbies" name="hobbies" rows="3" placeholder="We want to know the person behind the screen!" required></textarea>
+            <span class="error-msg" id="error-hobbies">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="server_mgmt">18. Do you have experience with server management, bots, or configurations? <span class="required">*</span></label>
+            <textarea id="server_mgmt" name="server_mgmt" rows="3" placeholder="e.g. setting up dyno, permissions, webhooks..." required></textarea>
+            <span class="error-msg" id="error-server_mgmt">Please answer this question.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="guidelines_agree">19. Do you agree to follow all staff guidelines and remain active? <span class="required">*</span></label>
+            <label class="checkbox-container" for="guidelines_agree">
+              <input type="checkbox" id="guidelines_agree" name="guidelines_agree" value="yes" required>
+              <span class="checkmark"></span>
+              <span class="checkbox-label">I agree to behave professionally, uphold server rules, and communicate with the team.</span>
+            </label>
+            <span class="error-msg" id="error-guidelines_agree">You must agree to the guidelines to submit.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="additional_info">20. Is there anything else you would like to share? <span class="required">*</span></label>
+            <textarea id="additional_info" name="additional_info" rows="3" placeholder="Anything else we should know?" required></textarea>
+            <span class="error-msg" id="error-additional_info">Please answer this question.</span>
+          </div>
+        </section>
+
+        <!-- Navigation Buttons -->
+        <div class="form-navigation">
+          <button type="button" id="prev-btn" class="nav-btn btn-secondary disabled" disabled>Back</button>
+          <button type="button" id="next-btn" class="nav-btn btn-primary">Next</button>
+          <button type="submit" id="submit-btn" class="nav-btn btn-success hidden">Submit Application</button>
+        </div>
+
+      </form>
+
+      <!-- Feedback Messages -->
+      <div id="status-card" class="status-card hidden">
+        <div class="status-icon success-icon" id="status-icon-success">
+          <svg viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        </div>
+        <div class="status-icon error-icon" id="status-icon-error">
+          <svg viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        </div>
+        <h3 id="status-title">Submission Status</h3>
+        <p id="status-message">Your application is being processed.</p>
+        <button type="button" id="status-reset-btn" class="nav-btn btn-primary hidden">Try Again</button>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>&copy; 2026 Discord Staff Portal. Built with &hearts; for Discord Communities.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

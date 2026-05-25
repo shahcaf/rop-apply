@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Application Review Portal</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .review-detail-card {
+      margin-top: 20px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      max-height: 450px;
+      overflow-y: auto;
+      margin-bottom: 24px;
+    }
+    .qa-item {
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding-bottom: 12px;
+    }
+    .qa-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+    .qa-question {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .qa-answer {
+      color: var(--text-normal);
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+    .status-pending { background-color: var(--blurple); color: #ffffff; }
+    .status-approved { background-color: var(--green-success); color: #ffffff; }
+    .status-rejected { background-color: var(--red-danger); color: #ffffff; }
+    .status-webhook { background-color: #4f545c; color: #ffffff; }
+  </style>
+</head>
+<body>
+
+  <!-- Background Decorative Orbs -->
+  <div class="decor-orb orb-1"></div>
+  <div class="decor-orb orb-2"></div>
+
+  <div class="app-container">
+    <header class="app-header">
+      <h1 id="app-title">Staff Review Portal</h1>
+      <p id="app-subtitle">Review applicant details and confirm decision.</p>
+    </header>
+
+    <main class="form-card">
+      
+      <!-- Loading State -->
+      <div id="loading-view" class="status-card">
+        <h3 style="margin-bottom: 0;">Loading Application Details...</h3>
+      </div>
+
+      <!-- Main Review Form -->
+      <div id="review-view" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px;">
+          <div>
+            <h2 id="applicant-name" style="color: #ffffff; font-size: 1.5rem; font-weight: 800;">Username</h2>
+            <p id="applicant-id" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">User ID: 0000000</p>
+          </div>
+          <div>
+            <span id="application-status" class="status-badge status-pending">Pending</span>
+          </div>
+        </div>
+
+        <div class="review-detail-card" id="answers-container">
+          <!-- Dynamically populated Q&A list -->
+        </div>
+
+        <!-- Action Box -->
+        <div id="action-box">
+          <form id="decision-form" onsubmit="return false;">
+            <div class="form-group">
+              <label for="reviewer_name">Your Name / Discord Tag <span class="required">*</span></label>
+              <input type="text" id="reviewer_name" placeholder="e.g. Administrator" required>
+              <span class="error-msg" id="error-reviewer_name">Please enter your name to authenticate.</span>
+              <small class="helper-text">Your name will be logged on the Discord message and database records.</small>
+            </div>
+
+            <div style="display: flex; gap: 16px; margin-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 24px;">
+              <button type="button" id="approve-btn" class="nav-btn btn-success" style="flex: 1;">Approve Application</button>
+              <button type="button" id="reject-btn" class="nav-btn btn-danger" style="flex: 1;">Reject Application</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Status Screen (Success/Error feedback) -->
+      <div id="status-view" class="status-card hidden">
+        <div class="status-icon success-icon" id="status-icon-success">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        </div>
+        <div class="status-icon error-icon" id="status-icon-error">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        </div>
+        <h3 id="status-title">Decision Submitted</h3>
+        <p id="status-message">The action was processed successfully.</p>
+      </div>
+
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; 2026 Discord Staff Portal. Review Dashboard.</p>
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const appId = urlParams.get('id');
+      const actionParam = urlParams.get('action'); // 'approve' or 'reject'
+
+      const loadingView = document.getElementById('loading-view');
+      const reviewView = document.getElementById('review-view');
+      const statusView = document.getElementById('status-view');
+      const answersContainer = document.getElementById('answers-container');
+      
+      const applicantName = document.getElementById('applicant-name');
+      const applicantId = document.getElementById('applicant-id');
+      const appStatus = document.getElementById('application-status');
+      
+      const reviewerNameInput = document.getElementById('reviewer_name');
+      const approveBtn = document.getElementById('approve-btn');
+      const rejectBtn = document.getElementById('reject-btn');
+      const actionBox = document.getElementById('action-box');
+      
+      const statusIconSuccess = document.getElementById('status-icon-success');
+      const statusIconError = document.getElementById('status-icon-error');
+      const statusTitle = document.getElementById('status-title');
+      const statusMessage = document.getElementById('status-message');
+
+      // Autofill reviewer name if stored in local storage
+      const savedReviewer = localStorage.getItem('reviewer_name');
+      if (savedReviewer) {
+        reviewerNameInput.value = savedReviewer;
+      }
+
+      if (!appId) {
+        showError('Invalid URL', 'No application ID was provided in the query parameters.');
+        return;
+      }
+
+      // Fetch application details
+      try {
+        const res = await fetch(`/api/application/${appId}`);
+        if (!res.ok) {
+          throw new Error('Application could not be found or has expired.');
+        }
+        
+        const data = await res.json();
+        
+        // Populating basic info
+        applicantName.innerText = data.answers.discord_tag;
+        applicantId.innerText = `Discord ID: ${data.answers.discord_id}`;
+        
+        // Status Badge styling
+        appStatus.innerText = data.status;
+        appStatus.className = 'status-badge';
+        if (data.status === 'pending' || data.status === 'sent_via_webhook') {
+          appStatus.classList.add('status-pending');
+        } else if (data.status === 'approved') {
+          appStatus.classList.add('status-approved');
+        } else if (data.status === 'rejected') {
+          appStatus.classList.add('status-rejected');
+        }
+
+        // Check if already processed
+        if (data.status !== 'pending' && data.status !== 'sent_via_webhook') {
+          actionBox.innerHTML = `
+            <div style="background: rgba(255,255,255,0.02); padding: 16px; border-radius: 4px; text-align: center; color: var(--text-muted); border: 1px dashed rgba(255,255,255,0.1);">
+              🔒 This application has already been processed as <strong>${data.status.toUpperCase()}</strong> by ${data.reviewedBy?.tag || 'Staff'} on ${new Date(data.reviewedAt).toLocaleString()}.
+            </div>`;
+        }
+
+        // Render Questions and Answers
+        const questionsList = [
+          { id: 'discord_tag', label: 'Discord Username' },
+          { id: 'discord_id', label: 'Discord User ID' },
+          { id: 'age', label: 'Age' },
+          { id: 'timezone', label: 'Timezone / Country' },
+          { id: 'hours_active', label: 'Hours Active Per Week' },
+          { id: 'why_staff', label: 'Why do you want to join our staff team?' },
+          { id: 'experience', label: 'What prior moderation/staff experience do you have?' },
+          { id: 'strengths', label: 'What are your key strengths?' },
+          { id: 'weaknesses', label: 'What are your weaknesses, and how do you manage them?' },
+          { id: 'stress_handle', label: 'How do you handle stressful situations or conflict?' },
+          { id: 'handle_spam', label: 'Scenario: A user is spamming links in chat. What do you do?' },
+          { id: 'handle_argument', label: 'Scenario: Two members are arguing in text/voice. How do you de-escalate?' },
+          { id: 'handle_dm_adv', label: 'Scenario: A member is reported for advertising in DMs. What do you do?' },
+          { id: 'handle_abuse', label: 'Scenario: You suspect another staff member is abusing power. What do you do?' },
+          { id: 'handle_nsfw', label: 'Scenario: A user posts NSFW content in general chat. What is your response?' },
+          { id: 'handle_unsure', label: 'If you are unsure of a moderation decision, what do you do?' },
+          { id: 'hobbies', label: 'What are your hobbies or interests outside of Discord?' },
+          { id: 'server_mgmt', label: 'Do you have experience with server management, bots, or configurations?' },
+          { id: 'guidelines_agree', label: 'Do you agree to follow all staff guidelines and remain active?' },
+          { id: 'additional_info', label: 'Is there anything else you would like to share?' }
+        ];
+
+        answersContainer.innerHTML = '';
+        questionsList.forEach((q, idx) => {
+          const item = document.createElement('div');
+          item.className = 'qa-item';
+          item.innerHTML = `
+            <div class="qa-question">${idx + 1}. ${q.label}</div>
+            <div class="qa-answer">${escapeHTML(data.answers[q.id] || 'N/A')}</div>
+          `;
+          answersContainer.appendChild(item);
+        });
+
+        // Hide loading, show content
+        loadingView.classList.add('hidden');
+        reviewView.classList.remove('hidden');
+
+      } catch (err) {
+        showError('Failed to Load', err.message || 'Could not fetch application information.');
+      }
+
+      // Event handlers for review action
+      approveBtn.addEventListener('click', () => submitDecision('approve'));
+      rejectBtn.addEventListener('click', () => submitDecision('reject'));
+
+      async function submitDecision(action) {
+        const reviewerName = reviewerNameInput.value.trim();
+        if (!reviewerName) {
+          reviewerNameInput.closest('.form-group').classList.add('invalid');
+          return;
+        }
+
+        reviewerNameInput.closest('.form-group').classList.remove('invalid');
+        localStorage.setItem('reviewer_name', reviewerName);
+
+        // Hide form, show status view
+        reviewView.classList.add('hidden');
+        statusView.classList.remove('hidden');
+        statusIconSuccess.classList.add('hidden');
+        statusIconError.classList.add('hidden');
+        statusTitle.innerText = 'Processing...';
+        statusMessage.innerText = 'Updating local logs and patching Discord message. Please wait.';
+
+        try {
+          const res = await fetch(`/api/review/${appId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action, reviewer: reviewerName })
+          });
+
+          const result = await res.json();
+          if (res.ok && result.success) {
+            statusTitle.innerText = `Application ${action === 'approve' ? 'Approved' : 'Rejected'}!`;
+            statusMessage.innerText = `Successfully marked application as ${action.toUpperCase()}.\nDiscord notification was updated.`;
+            statusIconSuccess.classList.remove('hidden');
+          } else {
+            throw new Error(result.message || 'Failed to submit decision.');
+          }
+        } catch (err) {
+          statusTitle.innerText = 'Action Failed';
+          statusMessage.innerText = err.message || 'Could not save review data. Please try again.';
+          statusIconError.classList.remove('hidden');
+        }
+      }
+
+      function showError(title, msg) {
+        loadingView.classList.add('hidden');
+        reviewView.classList.add('hidden');
+        statusView.classList.remove('hidden');
+        statusIconSuccess.classList.add('hidden');
+        statusIconError.classList.remove('hidden');
+        statusTitle.innerText = title;
+        statusMessage.innerText = msg;
+      }
+
+      function escapeHTML(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    });
+  </script>
+</body>
+</html>
