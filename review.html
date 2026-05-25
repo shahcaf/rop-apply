@@ -54,7 +54,6 @@
     .status-pending { background-color: var(--blurple); color: #ffffff; }
     .status-approved { background-color: var(--green-success); color: #ffffff; }
     .status-rejected { background-color: var(--red-danger); color: #ffffff; }
-    .status-webhook { background-color: #4f545c; color: #ffffff; }
   </style>
 </head>
 <body>
@@ -84,7 +83,7 @@
             <p id="applicant-id" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">User ID: 0000000</p>
           </div>
           <div>
-            <span id="application-status" class="status-badge status-pending">Pending</span>
+            <span id="application-status" class="status-badge status-pending">Decision Pending</span>
           </div>
         </div>
 
@@ -99,7 +98,7 @@
               <label for="reviewer_name">Your Name / Discord Tag <span class="required">*</span></label>
               <input type="text" id="reviewer_name" placeholder="e.g. Administrator" required>
               <span class="error-msg" id="error-reviewer_name">Please enter your name to authenticate.</span>
-              <small class="helper-text">Your name will be logged on the Discord message and database records.</small>
+              <small class="helper-text">Your name will be logged in the Discord webhook notification.</small>
             </div>
 
             <div style="display: flex; gap: 16px; margin-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 24px;">
@@ -120,6 +119,7 @@
         </div>
         <h3 id="status-title">Decision Submitted</h3>
         <p id="status-message">The action was processed successfully.</p>
+        <button type="button" id="status-back-btn" class="nav-btn btn-primary hidden" style="margin-top: 16px;">Back to Review</button>
       </div>
 
     </main>
@@ -130,10 +130,43 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    // ============================================================
+    // CONFIGURATION — Edit these values for your Discord server
+    // ============================================================
+    const CONFIG = {
+      WEBHOOK_URL: 'https://discord.com/api/webhooks/1508490753784152229/2wKdOZuCETLKraReRhbHuCkWFJ0B7OsB690dzcSaMF_dxruSjjoG_ScyYdmxJg3kxBvL',
+      SERVER_NAME: 'Our Discord Server'
+    };
+    // ============================================================
+
+    const QUESTIONS = [
+      { id: 'discord_tag',     label: 'Discord Username' },
+      { id: 'discord_id',     label: 'Discord User ID' },
+      { id: 'age',            label: 'Age' },
+      { id: 'timezone',       label: 'Timezone / Country' },
+      { id: 'hours_active',   label: 'Hours Active Per Week' },
+      { id: 'why_staff',      label: 'Why do you want to join our staff team?' },
+      { id: 'experience',     label: 'What prior moderation/staff experience do you have?' },
+      { id: 'strengths',      label: 'What are your key strengths?' },
+      { id: 'weaknesses',     label: 'What are your weaknesses, and how do you manage them?' },
+      { id: 'stress_handle',  label: 'How do you handle stressful situations or conflict?' },
+      { id: 'handle_spam',    label: 'Scenario: A user is spamming links in chat. What do you do?' },
+      { id: 'handle_argument',label: 'Scenario: Two members are arguing in text/voice. How do you de-escalate?' },
+      { id: 'handle_dm_adv',  label: 'Scenario: A member is reported for advertising in DMs. What do you do?' },
+      { id: 'handle_abuse',   label: 'Scenario: You suspect another staff member is abusing power. What do you do?' },
+      { id: 'handle_nsfw',    label: 'Scenario: A user posts NSFW content in general chat. What is your response?' },
+      { id: 'handle_unsure',  label: 'If you are unsure of a moderation decision, what do you do?' },
+      { id: 'hobbies',        label: 'What are your hobbies or interests outside of Discord?' },
+      { id: 'server_mgmt',    label: 'Do you have experience with server management, bots, or configurations?' },
+      { id: 'guidelines_agree', label: 'Do you agree to follow all staff guidelines and remain active?' },
+      { id: 'additional_info', label: 'Is there anything else you would like to share?' }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const appId = urlParams.get('id');
       const actionParam = urlParams.get('action'); // 'approve' or 'reject'
+      const rawAnswers = urlParams.get('answers');
+      const tagParam = urlParams.get('tag') || 'Unknown Applicant';
 
       const loadingView = document.getElementById('loading-view');
       const reviewView = document.getElementById('review-view');
@@ -153,6 +186,7 @@
       const statusIconError = document.getElementById('status-icon-error');
       const statusTitle = document.getElementById('status-title');
       const statusMessage = document.getElementById('status-message');
+      const statusBackBtn = document.getElementById('status-back-btn');
 
       // Autofill reviewer name if stored in local storage
       const savedReviewer = localStorage.getItem('reviewer_name');
@@ -160,89 +194,59 @@
         reviewerNameInput.value = savedReviewer;
       }
 
-      if (!appId) {
-        showError('Invalid URL', 'No application ID was provided in the query parameters.');
+      let parsedAnswers = null;
+      try {
+        if (rawAnswers) {
+          parsedAnswers = JSON.parse(decodeURIComponent(rawAnswers));
+        }
+      } catch (e) {
+        console.error("Failed to parse answers", e);
+      }
+
+      if (!parsedAnswers) {
+        showError('Invalid URL parameters', 'No valid application answers were found in the URL. Please make sure you clicked the correct link from Discord.');
         return;
       }
 
-      // Fetch application details
-      try {
-        const res = await fetch(`/api/application/${appId}`);
-        if (!res.ok) {
-          throw new Error('Application could not be found or has expired.');
-        }
-        
-        const data = await res.json();
-        
-        // Populating basic info
-        applicantName.innerText = data.answers.discord_tag;
-        applicantId.innerText = `Discord ID: ${data.answers.discord_id}`;
-        
-        // Status Badge styling
-        appStatus.innerText = data.status;
-        appStatus.className = 'status-badge';
-        if (data.status === 'pending' || data.status === 'sent_via_webhook') {
-          appStatus.classList.add('status-pending');
-        } else if (data.status === 'approved') {
-          appStatus.classList.add('status-approved');
-        } else if (data.status === 'rejected') {
-          appStatus.classList.add('status-rejected');
-        }
-
-        // Check if already processed
-        if (data.status !== 'pending' && data.status !== 'sent_via_webhook') {
-          actionBox.innerHTML = `
-            <div style="background: rgba(255,255,255,0.02); padding: 16px; border-radius: 4px; text-align: center; color: var(--text-muted); border: 1px dashed rgba(255,255,255,0.1);">
-              🔒 This application has already been processed as <strong>${data.status.toUpperCase()}</strong> by ${data.reviewedBy?.tag || 'Staff'} on ${new Date(data.reviewedAt).toLocaleString()}.
-            </div>`;
-        }
-
-        // Render Questions and Answers
-        const questionsList = [
-          { id: 'discord_tag', label: 'Discord Username' },
-          { id: 'discord_id', label: 'Discord User ID' },
-          { id: 'age', label: 'Age' },
-          { id: 'timezone', label: 'Timezone / Country' },
-          { id: 'hours_active', label: 'Hours Active Per Week' },
-          { id: 'why_staff', label: 'Why do you want to join our staff team?' },
-          { id: 'experience', label: 'What prior moderation/staff experience do you have?' },
-          { id: 'strengths', label: 'What are your key strengths?' },
-          { id: 'weaknesses', label: 'What are your weaknesses, and how do you manage them?' },
-          { id: 'stress_handle', label: 'How do you handle stressful situations or conflict?' },
-          { id: 'handle_spam', label: 'Scenario: A user is spamming links in chat. What do you do?' },
-          { id: 'handle_argument', label: 'Scenario: Two members are arguing in text/voice. How do you de-escalate?' },
-          { id: 'handle_dm_adv', label: 'Scenario: A member is reported for advertising in DMs. What do you do?' },
-          { id: 'handle_abuse', label: 'Scenario: You suspect another staff member is abusing power. What do you do?' },
-          { id: 'handle_nsfw', label: 'Scenario: A user posts NSFW content in general chat. What is your response?' },
-          { id: 'handle_unsure', label: 'If you are unsure of a moderation decision, what do you do?' },
-          { id: 'hobbies', label: 'What are your hobbies or interests outside of Discord?' },
-          { id: 'server_mgmt', label: 'Do you have experience with server management, bots, or configurations?' },
-          { id: 'guidelines_agree', label: 'Do you agree to follow all staff guidelines and remain active?' },
-          { id: 'additional_info', label: 'Is there anything else you would like to share?' }
-        ];
-
-        answersContainer.innerHTML = '';
-        questionsList.forEach((q, idx) => {
-          const item = document.createElement('div');
-          item.className = 'qa-item';
-          item.innerHTML = `
-            <div class="qa-question">${idx + 1}. ${q.label}</div>
-            <div class="qa-answer">${escapeHTML(data.answers[q.id] || 'N/A')}</div>
-          `;
-          answersContainer.appendChild(item);
-        });
-
-        // Hide loading, show content
-        loadingView.classList.add('hidden');
-        reviewView.classList.remove('hidden');
-
-      } catch (err) {
-        showError('Failed to Load', err.message || 'Could not fetch application information.');
+      // Populating basic info
+      applicantName.innerText = parsedAnswers.discord_tag || tagParam;
+      applicantId.innerText = `Discord ID: ${parsedAnswers.discord_id || 'N/A'}`;
+      
+      // Update badge initially based on parameter action
+      if (actionParam === 'approve') {
+        appStatus.innerText = 'Pre-selected: Approve';
+        appStatus.className = 'status-badge status-approved';
+      } else if (actionParam === 'reject') {
+        appStatus.innerText = 'Pre-selected: Reject';
+        appStatus.className = 'status-badge status-rejected';
+      } else {
+        appStatus.innerText = 'Pending Review';
+        appStatus.className = 'status-badge status-pending';
       }
+
+      // Render Questions and Answers
+      answersContainer.innerHTML = '';
+      QUESTIONS.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = 'qa-item';
+        item.innerHTML = `
+          <div class="qa-question">${idx + 1}. ${q.label}</div>
+          <div class="qa-answer">${escapeHTML(parsedAnswers[q.id] || 'N/A')}</div>
+        `;
+        answersContainer.appendChild(item);
+      });
+
+      // Hide loading, show content
+      loadingView.classList.add('hidden');
+      reviewView.classList.remove('hidden');
 
       // Event handlers for review action
       approveBtn.addEventListener('click', () => submitDecision('approve'));
       rejectBtn.addEventListener('click', () => submitDecision('reject'));
+      statusBackBtn.addEventListener('click', () => {
+        statusView.classList.add('hidden');
+        reviewView.classList.remove('hidden');
+      });
 
       async function submitDecision(action) {
         const reviewerName = reviewerNameInput.value.trim();
@@ -259,30 +263,60 @@
         statusView.classList.remove('hidden');
         statusIconSuccess.classList.add('hidden');
         statusIconError.classList.add('hidden');
+        statusBackBtn.classList.add('hidden');
         statusTitle.innerText = 'Processing...';
-        statusMessage.innerText = 'Updating local logs and patching Discord message. Please wait.';
+        statusMessage.innerText = 'Sending decision notification to Discord. Please wait.';
 
         try {
-          const res = await fetch(`/api/review/${appId}`, {
+          const isApproved = action === 'approve';
+          const embedTitle = isApproved 
+            ? `🟢 Application Approved — ${parsedAnswers.discord_tag || tagParam}`
+            : `🔴 Application Rejected — ${parsedAnswers.discord_tag || tagParam}`;
+          
+          const embedColor = isApproved ? 3066993 : 15158332; // Green or Red
+          
+          const webhookBody = {
+            username: 'Staff Review System',
+            embeds: [{
+              title: embedTitle,
+              description: 
+                `Applicant: **${parsedAnswers.discord_tag || tagParam}** (ID: \`${parsedAnswers.discord_id || 'N/A'}\`)\n` +
+                `Reviewed by: **${reviewerName}**\n` +
+                `Status: **${isApproved ? 'Approved' : 'Rejected'}**\n` +
+                `Decision Time: <t:${Math.floor(Date.now() / 1000)}:f>`,
+              color: embedColor,
+              timestamp: new Date().toISOString()
+            }]
+          };
+
+          const res = await fetch(CONFIG.WEBHOOK_URL, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ action, reviewer: reviewerName })
+            body: JSON.stringify(webhookBody)
           });
 
-          const result = await res.json();
-          if (res.ok && result.success) {
-            statusTitle.innerText = `Application ${action === 'approve' ? 'Approved' : 'Rejected'}!`;
-            statusMessage.innerText = `Successfully marked application as ${action.toUpperCase()}.\nDiscord notification was updated.`;
+          if (res.ok || res.status === 204) {
+            statusTitle.innerText = `Decision Submitted!`;
+            statusMessage.innerText = `Successfully marked application as ${action.toUpperCase()}.\nA notification embed was sent to your Discord channel.`;
             statusIconSuccess.classList.remove('hidden');
+            
+            // Update status badge on review page
+            appStatus.innerText = action.toUpperCase();
+            appStatus.className = `status-badge ${isApproved ? 'status-approved' : 'status-rejected'}`;
+            
+            // Allow back-navigation in case reviewer wants to re-check answers
+            statusBackBtn.classList.remove('hidden');
           } else {
-            throw new Error(result.message || 'Failed to submit decision.');
+            const errText = await res.text();
+            throw new Error(`Discord Webhook returned ${res.status}: ${errText}`);
           }
         } catch (err) {
           statusTitle.innerText = 'Action Failed';
-          statusMessage.innerText = err.message || 'Could not save review data. Please try again.';
+          statusMessage.innerText = err.message || 'Could not send decision. Please check your internet connection or webhook configuration.';
           statusIconError.classList.remove('hidden');
+          statusBackBtn.classList.remove('hidden');
         }
       }
 
